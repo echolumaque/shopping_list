@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shopping_list/extensions/http_response_extension.dart';
+import '../extensions/http_response_extension.dart';
+import '../models/grocery_item.dart';
 import '../data/categories.dart';
 import '../models/category.dart';
 
@@ -17,6 +18,7 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = '';
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
+  var _isSending = false;
 
   void _saveItem() async {
     if (!_formKey.currentState!.validate()) {
@@ -24,6 +26,9 @@ class _NewItemState extends State<NewItem> {
     }
 
     _formKey.currentState!.save();
+    setState(() {
+      _isSending = true;
+    });
 
     final response = await http.post(
       Uri.https(
@@ -46,7 +51,19 @@ class _NewItemState extends State<NewItem> {
       return;
     }
 
-    Navigator.of(context).pop();
+    final Map<String, dynamic> responseData = jsonDecode(response.body);
+    setState(() {
+      _isSending = false;
+    });
+
+    Navigator.of(context).pop<GroceryItem>(
+      GroceryItem(
+        id: responseData['name'] ?? '',
+        name: _enteredName,
+        quantity: _enteredQuantity,
+        category: _selectedCategory,
+      ),
+    );
   }
 
   @override
@@ -140,14 +157,22 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     child: Text('Reset'),
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
                   ),
                   ElevatedButton(
-                    onPressed: _saveItem,
-                    child: Text('Add Item'),
+                    onPressed: _isSending ? null : _saveItem,
+                    child: _isSending
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : Text('Add Item'),
                   ),
                 ],
               )
