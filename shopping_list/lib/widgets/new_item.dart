@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shopping_list/enums/constants.dart';
 import '../extensions/http_response_extension.dart';
 import '../models/grocery_item.dart';
 import '../data/categories.dart';
@@ -32,8 +33,8 @@ class _NewItemState extends State<NewItem> {
 
     final response = await http.post(
       Uri.https(
-        'shopping-list-flutter-c4675-default-rtdb.asia-southeast1.firebasedatabase.app',
-        'shopping-list.json',
+        Constants.firebaseBaseUrl.constValue,
+        Constants.firebaseJsonToUse.constValue,
       ),
       headers: {
         'Content-Type': 'application/json',
