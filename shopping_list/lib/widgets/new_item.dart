@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shopping_list/models/grocery_item.dart';
-import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
+import 'package:shopping_list/extensions/http_response_extension.dart';
 import '../data/categories.dart';
 import '../models/category.dart';
 
@@ -17,18 +18,35 @@ class _NewItemState extends State<NewItem> {
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
 
-  void _saveItem() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      Navigator.of(context).pop(
-        GroceryItem(
-          id: Uuid().v4(),
-          name: _enteredName,
-          quantity: _enteredQuantity,
-          category: _selectedCategory,
-        ),
-      );
+  void _saveItem() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+
+    _formKey.currentState!.save();
+
+    final response = await http.post(
+      Uri.https(
+        'shopping-list-flutter-c4675-default-rtdb.asia-southeast1.firebasedatabase.app',
+        'shopping-list.json',
+      ),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(
+        {
+          'name': _enteredName,
+          'quantity': _enteredQuantity,
+          'category': _selectedCategory.title
+        },
+      ),
+    );
+
+    if (!context.mounted || !response.isOk) {
+      return;
+    }
+
+    Navigator.of(context).pop();
   }
 
   @override
